@@ -28,7 +28,10 @@
 
 ### 🌱 현재 학습 중
 
-- Git/Github
+- Git/Githubgit push origin Assignment
+- Python
+- Django
+- Git/Githubgit add README.md
 
 ### 📫 프로필
 
