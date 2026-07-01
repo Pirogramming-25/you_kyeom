@@ -1,0 +1,49 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>나만의 영화 기록 사이트</title> 
+    <link rel="stylesheet" href="{% static 'reviews/reset.css' %}"> 
+    <link rel="stylesheet" href="{% static 'reviews/style.css' %}">
+</head>
+<body>
+    <div class="navbar">
+        <a href="{% url 'reviews:review_list' %}" class="logo">🎬 my Movie reviews</a>
+        <a href="{% url 'reviews:review_create' %}" class="add-btn">＋ Add a New review</a>
+    </div>
+
+    <div class="container">
+        <div class="sort-menu">
+            <span>정렬 기준:</span>
+            <a href="?sort=-created_at" class="{% if current_sort == '-created_at' %}active{% endif %}">최신순</a>
+            <a href="?sort=title" class="{% if current_sort == 'title' %}active{% endif %}">제목순</a>
+            <a href="?sort=rating" class="{% if current_sort == 'rating' %}active{% endif %}">별점순</a>
+            <a href="?sort=running_time" class="{% if current_sort == 'running_time' %}active{% endif %}">상영시간순</a>
+        </div>
+
+        <div class="movie-grid">
+            {% for review in reviews %}
+                <div class="movie-card">
+                    <a href="{% url 'reviews:review_detail' review.pk %}" class="movie-link-item">
+                        <div class="movie-poster-placeholder">🍿</div>
+                    </a>
+                    <div class="movie-card-info">
+                        <h3>
+                            <a href="{% url 'reviews:review_detail' review.pk %}" title="{{ review.title }}">
+                                {{ review.title }}
+                            </a>
+                        </h3>
+                        <p class="movie-meta">{{ review.release_year }}년 · {{ review.get_genre_display }}</p>
+                        <p class="movie-rating">★ {{ review.rating }}</p>
+                    </div>
+                </div>
+            {% empty %}
+                <p class="no-reviews">
+                    아직 등록된 영화 리뷰가 없습니다. 첫 리뷰를 작성해 보세요!
+                </p>
+            {% endfor %}
+        </div>
+    </div>
+</body>
+</html>
