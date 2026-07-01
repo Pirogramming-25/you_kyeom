@@ -1,0 +1,55 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ review.title }} - 리뷰 상세보기</title>
+    <link rel="stylesheet" href="{% static 'reviews/reset.css' %}">
+    <link rel="stylesheet" href="{% static 'reviews/style.css' %}">
+</head>
+<body>
+    <div class="navbar">
+        <a href="{% url 'reviews:review_list' %}" class="logo">🎬 my Movie reviews</a>
+        <a href="{% url 'reviews:review_create' %}" class="add-btn">＋ Add a New review</a>
+    </div>
+
+    <div class="container">
+        <!-- 상단 액션 바 (수정/삭제 버튼을 위로 배치) -->
+        <div class="detail-top-bar">
+            <a href="{% url 'reviews:review_list' %}" class="back-link">← 목록으로 돌아가기</a>
+            <div class="management-btns">
+                <a href="{% url 'reviews:review_update' review.pk %}" class="btn-edit-text">수정</a>
+                <form action="{% url 'reviews:review_delete' review.pk %}" method="POST" style="display:inline;" onsubmit="return confirm('정말 이 리뷰를 삭제하시겠습니까?');">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-delete-text">삭제</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- 영화 메인 헤더 구역 -->
+        <div class="movie-detail-header">
+            <div class="detail-poster-mock">🍿</div>
+            <div class="detail-main-info">
+                <h1 class="detail-movie-title">{{ review.title }}</h1>
+                <div class="detail-rating-badge">⭐ {{ review.rating }} / 5.0</div>
+                
+                <div class="info-grid">
+                    <div class="info-item"><strong>개봉 연도</strong><span>{{ review.release_year }}년</span></div>
+                    <div class="info-item"><strong>장르</strong><span>{{ review.get_genre_display }}</span></div>
+                    <div class="info-item"><strong>러닝타임</strong><span>{{ converted_time }}</span></div>
+                    <div class="info-item"><strong>감독</strong><span>{{ review.director }}</span></div>
+                    <div class="info-item"><strong>주연 배우</strong><span>{{ review.actor }}</span></div>
+                </div>
+            </div>
+        </div>
+
+        <hr>
+
+        <div class="review-section">
+            <div class="review-content-box">
+                {{ review.content|linebreaksbr }}
+            </div>
+        </div>
+    </div>
+</body>
+</html>
