@@ -1,0 +1,87 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>{% if review %}리뷰 수정하기{% else %}새 리뷰 작성하기{% endif %}</title>
+    <link rel="stylesheet" href="{% static 'reviews/reset.css' %}">
+    <link rel="stylesheet" href="{% static 'reviews/style.css' %}">
+</head>
+<body>
+    <div class="navbar">
+        <a href="{% url 'reviews:review_list' %}" class="logo">🎬 my Movie reviews</a>
+        <a href="{% url 'reviews:review_create' %}" class="add-btn">＋ Add a New review</a>
+    </div>
+
+    <div class="container">
+        <form method="POST">
+            {% csrf_token %}
+            
+            <div class="form-top-bar">
+                <h2>{% if review %}🎬 리뷰 수정하기{% else %}🎬 새 리뷰 작성하기{% endif %}</h2>
+                <div class="form-action-btns">
+                    <a href="{% url 'reviews:review_list' %}" class="btn-cancel-text">취소</a>
+                    <button type="submit" class="btn-submit-top">리뷰 저장하기</button>
+                </div>
+            </div>
+            
+            <hr>
+            
+            <div class="form-fields-container">
+                <div class="form-group-row">
+                    <div class="form-field">
+                        <label>영화 제목</label>
+                        <input type="text" name="title" value="{{ review.title|default:'' }}" placeholder="영화 제목을 입력하세요" required>
+                    </div>
+                    <div class="form-field">
+                        <label>개봉 연도 (년)</label>
+                        <input type="number" name="release_year" value="{{ review.release_year|default:'' }}" placeholder="예: 2026" required>
+                    </div>
+                </div>
+
+                <div class="form-group-row">
+                    <div class="form-field">
+                        <label>감독</label>
+                        <input type="text" name="director" value="{{ review.director|default:'' }}" placeholder="감독 이름을 입력하세요" required>
+                    </div>
+                    <div class="form-field">
+                        <label>주연 배우</label>
+                        <input type="text" name="actor" value="{{ review.actor|default:'' }}" placeholder="주연 배우들을 입력하세요" required>
+                    </div>
+                </div>
+
+                <div class="form-group-row">
+                    <div class="form-field">
+                        <label>장르</label>
+                        <select name="genre" required>
+                            <option value="" disabled {% if not review %}selected{% endif %}>== 장르 선택 ==</option>
+                            <option value="action" {% if review.genre == 'action' %}selected{% endif %}>Action</option>
+                            <option value="comedy" {% if review.genre == 'comedy' %}selected{% endif %}>Comedy</option>
+                            <option value="drama" {% if review.genre == 'drama' %}selected{% endif %}>Drama</option>
+                            <option value="romance" {% if review.genre == 'romance' %}selected{% endif %}>Romance</option>
+                            <option value="thriller" {% if review.genre == 'thriller' %}selected{% endif %}>Thriller</option>
+                            <option value="horror" {% if review.genre == 'horror' %}selected{% endif %}>Horror</option>
+                            <option value="sf" {% if review.genre == 'sf' %}selected{% endif %}>SF</option>
+                        </select>
+                    </div>
+                    <div class="form-group-row-sub">
+                        <div class="form-field">
+                            <label>별점 (5점 만점)</label>
+                            <input type="number" step="0.1" name="rating" min="0" max="5" value="{{ review.rating|default:'' }}" placeholder="0.0 ~ 5.0" required>
+                        </div>
+                        <div class="form-field">
+                            <label>러닝타임 (분)</label>
+                            <input type="number" name="running_time" value="{{ review.running_time|default:'' }}" placeholder="분 단위 입력" required>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-field full-width">
+                    <label>리뷰 내용</label>
+                    <textarea name="content" rows="10" placeholder="영화에 대한 나만의 솔직한 리뷰를 적어보세요..." required>{{ review.content|default:'' }}</textarea>
+                </div>
+            </div>
+        </form>
+    </div>
+</body>
+</html>
