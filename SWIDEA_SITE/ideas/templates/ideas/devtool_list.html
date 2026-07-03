@@ -1,0 +1,102 @@
+{% extends 'ideas/base.html' %}
+
+{% block content %}
+<style>
+    .list-container { 
+        max-width: 900px; 
+        margin: 0 auto; 
+        background: #fff; 
+        padding: 40px; 
+        border: 1px solid #dee2e6; 
+        border-radius: 8px; 
+    }
+    
+    .list-header {
+        text-align: center;
+        margin-bottom: 35px;
+    }
+    .list-title { 
+        font-size: 1.8rem; 
+        font-weight: bold; 
+        color: #212529; 
+        margin-bottom: 8px;
+    }
+    .list-subtitle {
+        font-size: 0.95rem;
+        color: #6c757d;
+    }
+    
+    .tool-list { 
+        list-style: none; 
+        border-top: 2px solid #212529; 
+    }
+    
+    .tool-item { 
+        padding: 18px 10px; 
+        border-bottom: 1px solid #dee2e6; 
+        display: grid;
+        grid-template-columns: 150px 180px 1fr; 
+        align-items: center;
+        gap: 15px;
+    }
+    
+    .tool-name-link { 
+        font-weight: 700; 
+        font-size: 1.1rem; 
+        color: #212529; 
+        transition: color 0.2s;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .tool-name-link:hover { 
+        color: #198754;
+        text-decoration: underline;
+    }
+    
+    .tool-kind { 
+        font-size: 1rem; 
+        color: #198754; 
+        font-weight: 500;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    .tool-description { 
+        font-size: 0.95rem; 
+        color: #6c757d; 
+        line-clamp: 1; 
+        display: block; 
+        overflow: hidden; 
+    }
+    
+    .empty-message { 
+        color: #6c757d; 
+        text-align: center; 
+        padding: 50px 0; 
+        border-bottom: 1px solid #dee2e6;
+    }
+</style>
+
+<div class="list-container">
+    <div class="list-header">
+        <h2 class="list-title">DevTool List</h2>
+        <p class="list-subtitle">개발툴 목록 페이지입니다. 자신에게 사용 가능한 개발툴의 목록을 확인해 보세요.</p>
+    </div>
+    
+    <ul class="tool-list">
+        {% for tool in devtools %}
+            <li class="tool-item">
+                <a href="{% url 'devtool_detail' tool.pk %}" class="tool-name-link">{{ tool.name }}</a>
+                
+                <span class="tool-kind">{{ tool.kind }}</span>
+                
+                <p class="tool-description">{{ tool.content }}</p>
+            </li>
+        {% empty %}
+            <p class="empty-message">등록된 개발 툴이 없습니다.</p>
+        {% endfor %}
+    </ul>
+</div>
+{% endblock %}
