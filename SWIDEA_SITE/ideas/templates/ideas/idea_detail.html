@@ -1,0 +1,234 @@
+{% extends 'ideas/base.html' %}
+{% block content %}
+    <style>
+        .detail-container { 
+            max-width: 800px; 
+            margin: 0 auto; 
+            background: #fff; 
+            padding: 40px; 
+            border: 1px solid #dee2e6; 
+            border-radius: 8px; 
+        }
+
+        .detail-header-area {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .main-page-title {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #212529; 
+            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+        }
+        .main-page-subtitle {
+            font-size: 0.9rem;
+            color: #6c757d;
+        }
+        
+        .idea-header { 
+            border-bottom: 2px solid #198754; 
+            padding-bottom: 15px; 
+            margin-bottom: 25px; 
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+        }
+        .idea-title-area {
+            flex: 1;
+        }
+        .idea-title { 
+            font-size: 2.0rem; 
+            color: #212529; 
+            font-weight: bold; 
+            margin: 0;
+        }
+        .star-toggle-btn { top: 12px; right: 12px; background: none; border: none; cursor: pointer; z-index: 10; }
+        .star-icon { font-size: 1.5rem; color: #ffc107; }
+
+
+        .detail-meta { 
+            display: flex; 
+            flex-wrap: wrap; 
+            gap: 20px; 
+            font-size: 0.95rem; 
+            color: #6c757d; 
+            margin-bottom: 25px; 
+        }
+        
+        .detail-img { 
+            width: 100%; 
+            max-height: 450px; 
+            object-fit: cover; 
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            margin-bottom: 30px;
+        }
+        
+        .detail-content { 
+            font-size: 1.1rem; 
+            color: #333; 
+            line-height: 1.8; 
+            margin-bottom: 35px; 
+            background: #f8f9fa; 
+            padding: 20px; 
+            border-radius: 6px; 
+            white-space: pre-line; 
+        }
+        .section-title { 
+            font-size: 1.25rem; 
+            font-weight: bold; 
+            margin-bottom: 15px; 
+            color: #212529; 
+        }
+        .devtool-box {
+            background: #f8f9fa;
+            padding: 15px 20px;
+            margin-bottom: 40px;
+            border-radius: 6px;
+        }
+        .devtool-link {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #333;
+            text-decoration: none;
+        }
+        .devtool-link:hover {
+            text-decoration: underline;
+        }
+        .badge-empty {
+            color: #6c757d;
+            font-size: 1rem;
+        }
+        
+        .btn-group-actions { 
+            display: flex; 
+            justify-content: flex-end; 
+            gap: 10px; 
+            border-top: 1px solid #dee2e6; 
+            padding-top: 25px; 
+        }
+        .btn-action { 
+            padding: 10px 20px; 
+            border-radius: 4px; 
+            font-weight: bold; 
+            font-size: 0.95rem; 
+            cursor: pointer; 
+            text-align: center; 
+            border: none; 
+            display: inline-block;
+            text-decoration: none;
+        }
+
+        .btn-list { 
+            background-color: #6c757d; 
+            color: white; 
+        }
+        .btn-list:hover { 
+            background-color: #5a6268; 
+        }
+        .btn-update { 
+            background-color: #ffc107; 
+            color: #212529; 
+        }
+        .btn-update:hover { 
+            background-color: #ffca2c; 
+        }
+        .btn-delete { 
+            background-color: #dc3545; 
+            color: white; 
+        }
+        .btn-delete:hover { 
+            background-color: #bb2d3b; 
+        }
+    </style>
+
+    <div class="detail-container">
+        <div class="detail-header-area">
+            <h2 class="main-page-title">Idea Detail</h2>
+            <p class="main-page-subtitle">아이디어 세부내용 페이지입니다. 등록된 혁신적인 아이디어의 상세 내용을 확인해 보세요.</p>
+        </div>
+
+        <div class="idea-header">
+            <div class="idea-title-area">
+                <h2 class="idea-title">💡 {{ idea.title }}</h2>
+            </div>
+            
+            <div>
+            <button type="button" class="star-toggle-btn js-star-detail-btn" data-id="{{ idea.id }}">
+                {% if idea.id in user_starred_ideas %}
+                    <i class="fa-solid fa-star star-icon" ></i>
+                {% else %}
+                    <i class="fa-regular fa-star star-icon" style="color: #ffc107;"></i>
+                {% endif %}
+            </button>
+        </div>
+        </div>
+        
+        <div class="detail-meta">
+            <span>📅 등록일: {{ idea.created_at|date:"Y-m-d H:i" }}</span>
+            <span>🔥 관심도: <strong>{{ idea.interest }}</strong></span>
+        </div>
+
+        {% if idea.image %}
+            <img src="{{ idea.image.url }}" class="detail-img" alt="{{ idea.title }}">
+        {% else %}
+            <img src="https://via.placeholder.com/800x450" class="detail-img" alt="No Image">
+        {% endif %}
+        
+        <p class="detail-content">{{ idea.content }}</p>
+        
+        <h3 class="section-title">사용한 개발툴</h3>
+        <div class="devtool-box">
+            {% if idea.devtool %}
+                <a href="{% url 'devtool_detail' idea.devtool.id %}" class="devtool-link">
+                    🛠 {{ idea.devtool.name }}
+                </a>
+            {% else %}
+                <span class="badge-empty">지정된 개발툴이 없습니다.</span>
+            {% endif %}
+        </div>
+        
+        <div class="btn-group-actions">
+            <a href="{% url 'idea_list' %}" class="btn-action btn-list">목록</a>
+            
+            <a href="{% url 'idea_update' idea.id %}" class="btn-action btn-update">수정</a>
+            
+            <form action="{% url 'idea_delete' idea.id %}" method="POST" style="margin: 0;" >
+                {% csrf_token %}
+                <button type="submit" class="btn-action btn-delete">삭제</button>
+            </form>
+        </div>
+    </div>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const starDetailBtn = document.querySelector('.js-star-detail-btn');
+        starDetailBtn.addEventListener('click', function(e) {
+            const ideaId = this.getAttribute('data-id');
+            const url = `/idea/${ideaId}/toggle_star/`;
+
+            fetch(url, {
+                method: 'GET',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    const icon = starDetailBtn.querySelector('.star-icon');
+                    if (!icon) return;
+
+                    if (data.starred) {
+                        icon.className = 'fa-solid fa-star star-icon';
+                        icon.style.color = '#ffc107'; 
+                    } else {
+                        icon.className = 'fa-regular fa-star star-icon';
+                        icon.style.color = '#ffc107';
+                    }
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        });
+    });
+    </script>
+{% endblock %}

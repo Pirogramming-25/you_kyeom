@@ -1,0 +1,138 @@
+{% extends 'ideas/base.html' %}
+
+{% block content %}
+<style>
+
+    .form-container { 
+        max-width: 600px; 
+        margin: 0 auto; 
+        background: #fff; 
+        padding: 40px; 
+        border: 1px solid #dee2e6; 
+        border-radius: 8px; 
+    }
+    .form-title { 
+        font-size: 1.8rem; 
+        margin-bottom: 8px; 
+        color: #198754; 
+        font-weight: bold; 
+        text-align: center; 
+    }
+    .form-subtitle {
+        text-align: center;
+        font-size: 0.9rem;
+        color: #6c757d;
+        margin-bottom: 30px;
+    }
+    
+
+    .form-group { margin-bottom: 20px; display: flex; flex-direction: column; }
+    .form-group label { font-size: 0.95rem; font-weight: 600; margin-bottom: 8px; color: #495057; }
+    .form-control { padding: 10px; font-size: 1rem; border: 1px solid #ced4da; border-radius: 4px; font-family: inherit; box-sizing: border-box; width: 100%; }
+    .form-control:focus { border-color: #198754; outline: none; box-shadow: 0 0 0 0.2rem rgba(25, 135, 84, 0.25); }
+    
+    textarea.form-control { resize: vertical; min-height: 150px; }
+    
+    .current-img-box {
+        margin-top: 8px;
+        font-size: 0.85rem;
+        color: #6c757d;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .current-img-preview {  
+        width: 60px;
+        height: 45px;
+        object-fit: cover;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+    }
+
+    .form-actions {
+        display: flex;
+        gap: 12px;
+        margin-top: 25px;
+        border-top: 1px solid #dee2e6;
+        padding-top: 20px;
+    }
+    .btn-action {
+        flex: 1;
+        padding: 12px;
+        font-size: 1rem;
+        font-weight: bold;
+        border-radius: 4px;
+        cursor: pointer;
+        text-align: center;
+        border: none;
+        text-decoration: none;
+    }
+    .btn-submit { 
+        background-color: #198754; 
+        color: white; 
+    }
+    .btn-submit:hover { 
+        background-color: #157347; 
+    }
+    .btn-cancel {
+        background-color: #6c757d;
+        color: white;
+    }
+    .btn-cancel:hover {
+        background-color: #5a6268;
+    }
+</style>
+
+<div class="form-container">
+    <h2 class="form-title">✏️ 아이디어 수정</h2>
+    <p class="form-subtitle">기존 아이디어의 내용을 변경하고 수정 사항을 저장합니다.</p>
+    
+    <form action="{% url 'idea_update' idea.id %}" method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        
+        <div class="form-group">
+            <label for="title">아이디어 제목</label>
+            <input type="text" id="title" name="title" class="form-control" value="{{ idea.title }}" placeholder="제목을 입력하세요" required>
+        </div>
+
+        <div class="form-group">
+            <label for="devtool">사용 개발 툴</label>
+            <select id="devtool" name="devtool" class="form-control" required>
+                <option value="" disabled>개발 툴을 선택해주세요</option>
+                {% for tool in devtools %}
+                    <option value="{{ tool.id }}" {% if idea.devtool and idea.devtool.id == tool.id %}selected{% endif %}>
+                        {{ tool.name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="interest">현재 관심도</label>
+            <input type="number" id="interest" name="interest" class="form-control" value="{{ idea.interest }}" min="0">
+        </div>
+
+        <div class="form-group">
+            <label for="image">썸네일 이미지 변경</label>
+            <input type="file" id="image" name="image" class="form-control" accept="image/*">
+            
+            {% if idea.image %}
+                <div class="current-img-box">
+                    <img src="{{ idea.image.url }}" class="current-img-preview" alt="Current Image">
+                    <span>현재 파일: <a href="{{ idea.image.url }}" target="_blank">{{ idea.image.name }}</a>이 등록되어 있습니다.</span>
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="form-group">
+            <label for="content">아이디어 상세 내용</label>
+            <textarea id="content" name="content" class="form-control" placeholder="아이디어 상세 설명을 적어주세요" required>{{ idea.content }}</textarea>
+        </div>
+
+        <div class="form-actions">
+            <a href="{% url 'idea_detail' idea.id %}" class="btn-action btn-cancel">취소</a>
+            <button type="submit" class="btn-action btn-submit">수정 완료하기</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

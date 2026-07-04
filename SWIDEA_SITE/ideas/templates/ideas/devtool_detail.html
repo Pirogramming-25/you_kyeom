@@ -1,0 +1,171 @@
+{% extends 'ideas/base.html' %}
+
+{% block content %}
+<style>
+
+    .detail-container { 
+        max-width: 800px; 
+        margin: 0 auto; 
+        background: #fff; 
+        padding: 40px; 
+        border: 1px solid #dee2e6; 
+        border-radius: 8px; 
+    }
+    
+
+    .detail-header-area {
+        text-align: center;
+        margin-bottom: 40px;
+    }
+    .main-page-title {
+        font-size: 1.8rem;
+        font-weight: bold;
+        color: #212529; 
+        margin-bottom: 8px;
+        letter-spacing: 0.5px;
+    }
+    .main-page-subtitle {
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+    
+    .tool-header { 
+        border-bottom: 2px solid #212529; 
+        padding-bottom: 15px; 
+        margin-bottom: 25px; 
+    }
+    .tool-title { 
+        font-size: 2.0rem; 
+        color: #212529; 
+        font-weight: bold; 
+    }
+    .tool-kind { 
+        font-size: 1rem; 
+        color: #198754; 
+        margin-top: 5px; 
+        font-weight: 600;
+    }
+
+    .tool-content { 
+        font-size: 1.1rem; 
+        line-height: 1.8; 
+        color: #333; 
+        margin-bottom: 35px; 
+        background: #f8f9fa; 
+        border-radius: 6px; 
+        white-space: pre-line; 
+        padding: 15px 10px; 
+    }
+
+    .section-title { 
+        font-size: 1.25rem; 
+        font-weight: bold; 
+        margin-bottom: 15px; 
+        color: #212529; 
+    }
+    .associated-list { 
+        list-style: none; 
+        background: #f8f9fa; 
+        margin-bottom: 20px; 
+        border-radius: 6px; 
+    }
+    .associated-item { 
+        padding: 0 0 0 15px; 
+        display: flex; 
+        justify-content: space-between; 
+        align-items: center; 
+    }
+    
+    .idea-title-link { 
+
+        color: #333; 
+
+    }
+    .idea-title-link:hover { 
+        color: #0d6efd;
+    }
+
+    .btn-group-actions { 
+        display: flex; 
+        justify-content: flex-end; 
+        gap: 10px; 
+        border-top: 1px solid #dee2e6; 
+        padding-top: 25px; 
+    }
+    .btn-action { 
+        padding: 10px 20px; 
+        border-radius: 4px; 
+        font-weight: bold; 
+        font-size: 0.95rem; 
+        cursor: pointer; 
+        text-align: center; 
+        border: none; 
+        display: inline-block;
+    }
+
+    .btn-list { 
+        background-color: #6c757d; 
+        color: white; 
+    }
+    .btn-list:hover { 
+        background-color: #5a6268; 
+    }
+
+    .btn-update { 
+        background-color: #ffc107; 
+        color: #212529; 
+    }
+    .btn-update:hover { 
+        background-color: #ffca2c; 
+    }
+
+    .btn-delete { 
+        background-color: #dc3545; 
+        color: white; 
+    }
+    .btn-delete:hover { 
+        background-color: #bb2d3b; 
+    }
+    
+    .empty-message { 
+        color: #6c757d; 
+        padding: 25px 10px; 
+    }
+</style>
+
+<div class="detail-container">
+    <div class="detail-header-area">
+        <h2 class="main-page-title">DevTool Detail</h2>
+        <p class="main-page-subtitle">개발툴 세부내용 페이지입니다. 자신이 등록한 세부있는 개발툴에 대한 상세내용을 확인해 보세요.</p>
+    </div>
+
+    <div class="tool-header">
+        <h2 class="tool-title">🛠 {{ devtool.name }}</h2>
+        <div class="tool-kind">📌 분류: {{ devtool.kind }}</div>
+    </div>
+
+    <div class="tool-content">{{devtool.content}}</div>
+
+    <h3 class="section-title">>만들 수 있는 SW 목록</h3>
+    <ul class="associated-list">
+        {% for idea in devtool.idea_set.all %}
+            <li class="associated-item">
+                <a href="{% url 'idea_detail' idea.pk %}" class="idea-title-link">-{{ idea.title }}</a>
+            </li>
+        {% empty %} 
+            <li class="empty-message">이 개발툴을 사용하도록 매핑된 아이디어가 아직 없습니다.</li>
+        {% endfor %}
+    </ul>
+
+    <div class="btn-group-actions">
+        <a href="{% url 'devtool_list' %}" class="btn-action btn-list">목록</a>
+        
+        <a href="{% url 'devtool_update' devtool.pk %}" class="btn-action btn-update">수정</a>
+        
+        <form action="{% url 'devtool_delete' devtool.pk %}" method="POST"  style="margin: 0;">
+            {% csrf_token %}
+            <button type="submit" class="btn-action btn-delete">삭제</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

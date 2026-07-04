@@ -1,0 +1,196 @@
+{% extends 'ideas/base.html' %}
+
+{% block content %}
+<style>
+    .list-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+    .list-header h2 { font-size: 1.8rem; color: #212529; }
+    
+
+    .btn-group { display: flex; border: 1px solid #0d6efd; border-radius: 4px; overflow: hidden; }
+    .sort-btn { padding: 8px 16px; background-color: #fff; color: #0d6efd; font-size: 0.9rem; font-weight: 500; }
+    .sort-btn:not(:last-child) { border-right: 1px solid #0d6efd; }
+    .sort-btn:hover { background-color: #f0f5ff; }
+    .sort-btn.active { background-color: #0d6efd; color: #fff; }
+
+    .idea-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; }
+    .idea-card { background: #fff; border: 1px solid #dee2e6; border-radius: 8px; overflow: hidden; position: relative; display: flex; flex-direction: column; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+    
+
+    .star-button { position: absolute; top: 12px; right: 12px; background: none; border: none; cursor: pointer; z-index: 10; }
+    .star-icon { font-size: 1.5rem; color: #ffc107; }
+
+    .card-img { width: 100%; height: 200px; object-fit: cover; border-bottom: 1px solid #dee2e6; }
+    .card-body { padding: 20px; display: flex; flex-direction: column; flex-grow: 1; }
+    .card-title { font-size: 1.15rem; margin-bottom: 10px; font-weight: bold; }
+    .card-title a:hover { color: #0d6efd; }
+    
+    .card-text { font-size: 0.9rem; color: #6c757d; margin-bottom: 15px; line-clamp: 2; display: block; overflow: hidden; }
+    .card-tool { font-size: 0.8rem; color: #495057; background: #e9ecef; padding: 3px 8px; border-radius: 4px; align-self: flex-start; margin-bottom: 15px; }
+    .card-tool:hover { background: #ced4da; }
+    
+    .divider { border: 0; border-top: 1px solid #dee2e6; margin-top: auto; margin-bottom: 15px; }
+
+    .interest-area { display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; }
+    .interest-buttons { display: flex; border: 1px solid #ced4da; border-radius: 4px; overflow: hidden; }
+    .interest-btn { padding: 4px 12px; background: #fff; font-weight: bold; font-size: 0.85rem; }
+    .interest-btn.plus { color: #198754; border-right: 1px solid #ced4da; }
+    .interest-btn.plus:hover { background-color: #e8f5e9; }
+    .interest-btn.minus { color: #dc3545; }
+    .interest-btn.minus:hover { background-color: #ffebee; }
+    
+    .empty-message { grid-column: span 4; text-align: center; color: #6c757d; padding: 50px 0; }
+
+    .pagination-container { display: flex; justify-content: center; margin-top: 40px; }
+    .pagination { display: flex; list-style: none; padding: 0; border-radius: 4px; border: 1px solid #dee2e6; }
+    .page-item a, .page-item span { display: block; padding: 8px 14px; color: #0d6efd; text-decoration: none; background: #fff; border-right: 1px solid #dee2e6; font-size: 0.9rem; }
+    .page-item:last-child a, .page-item:last-child span { border-right: none; }
+    .page-item a:hover { background-color: #e9ecef; }
+    .page-item.active span { background-color: #0d6efd; color: #fff; font-weight: bold; }
+    .page-item.disabled span { color: #6c757d; background-color: #f8f9fa; cursor: not-allowed; }
+</style>
+
+<div class="list-header">
+    <h2>💡 아이디어 관리 리스트</h2>
+    <div class="btn-group">
+        <a href="?sort=latest" class="sort-btn {% if sort == 'latest' %}active{% endif %}">최신순</a>
+        <a href="?sort=stars" class="sort-btn {% if sort == 'stars' %}active{% endif %}">찜하기순</a>
+        <a href="?sort=name" class="sort-btn {% if sort == 'name' %}active{% endif %}">이름순</a>
+        <a href="?sort=oldest" class="sort-btn {% if sort == 'oldest' %}active{% endif %}">등록순</a>
+    </div>
+</div>
+
+<div class="idea-grid">
+    {% for idea in ideas %}
+    <div class="idea-card">
+        <button type="button" class="star-button js-star-btn" data-id="{{ idea.id }}">
+            {% if idea.id in user_starred_ideas %}
+                <i class="fa-solid fa-star star-icon"></i>
+            {% else %}
+                <i class="fa-regular fa-star star-icon" style="color: #ffc107;"></i>
+            {% endif %}
+        </button>
+
+        {% if idea.image %}
+            <img src="{{ idea.image.url }}" class="card-img" alt="{{ idea.title }}">
+        {% else %}
+            <img src="https://via.placeholder.com/200" class="card-img" alt="No Image">
+        {% endif %}
+
+        <div class="card-body">
+            <h5 class="card-title">
+                <a href="{% url 'idea_detail' idea.pk %}">{{ idea.title }}</a>
+            </h5>
+            <p class="card-text">{{ idea.content }}</p>
+            
+            {% if idea.devtool %}
+                <a href="{% url 'devtool_detail' idea.devtool.pk %}" class="card-tool">🛠 {{ idea.devtool.name }}</a>
+            {% endif %}
+            
+            <hr class="divider">
+            
+            <div class="interest-area">
+                <span>관심도: <strong class="js-interest-count" data-id="{{ idea.id }}">{{ idea.interest }}</strong></span>
+                <div class="interest-buttons">
+                    <a href="javascript:void(0);" data-id="{{ idea.id }}" data-action="increase" class="interest-btn plus js-interest-btn">+</a>
+                    <a href="javascript:void(0);" data-id="{{ idea.id }}" data-action="decrease" class="interest-btn minus js-interest-btn">-</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <p class="empty-message">등록된 아이디어가 없습니다.</p>
+    {% endfor %}
+</div>
+
+{% if ideas.has_other_pages %}
+<div class="pagination-container">
+    <ul class="pagination">
+        {% if ideas.has_previous %}
+            <li class="page-item"><a href="?sort={{ sort }}&page={{ ideas.previous_page_number }}">&laquo; 이전</a></li>
+        {% else %}
+            <li class="page-item disabled"><span>&laquo; 이전</span></li>
+        {% endif %}
+
+        {% for i in ideas.paginator.page_range %}
+            {% if ideas.number == i %}
+                <li class="page-item active"><span>{{ i }}</span></li>
+            {% else %}
+                <li class="page-item"><a href="?sort={{ sort }}&page={{ i }}">{{ i }}</a></li>
+            {% endif %}
+        {% endfor %}
+
+        {% if ideas.has_next %}
+            <li class="page-item"><a href="?sort={{ sort }}&page={{ ideas.next_page_number }}">다음 &raquo;</a></li>
+        {% else %}
+            <li class="page-item disabled"><span>다음 &raquo;</span></li>
+        {% endif %}
+    </ul>
+</div>
+{% endif %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const interestButtons = document.querySelectorAll('.js-interest-btn');
+
+    interestButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault(); 
+            
+            const ideaId = this.getAttribute('data-id');
+            const action = this.getAttribute('data-action');
+            const url = `/idea/${ideaId}/interest/${action}/`;
+
+            fetch(url, {
+                method: 'GET', 
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    const countElement = document.querySelector(`.js-interest-count[data-id="${ideaId}"]`);
+                    if (countElement) {
+                        countElement.textContent = data.interest;
+                    }
+                } else {
+                    alert('문제가 발생했습니다. 다시 시도해 주세요.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('요청을 처리하지 못했습니다.');
+            });
+        });
+    });
+
+    const starButtons = document.querySelectorAll('.js-star-btn');
+    starButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            const ideaId = this.getAttribute('data-id');
+            const url = `/idea/${ideaId}/toggle_star/`; 
+
+            fetch(url, {
+                method: 'GET', 
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    const icon = button.querySelector('.star-icon');
+                    
+                    if (data.starred) {
+                        icon.className = 'fa-solid fa-star star-icon';
+                        icon.style.color = '#ffc107';
+                    } else {
+                        icon.className = 'fa-regular fa-star star-icon';
+                        icon.style.color = '#ffc107';
+                    }
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        });
+    });
+});
+</script>
+{% endblock %}

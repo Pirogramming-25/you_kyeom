@@ -1,0 +1,57 @@
+{% extends 'ideas/base.html' %}
+
+{% block content %}
+<style>
+    .form-container { max-width: 600px; margin: 0 auto; background: #fff; padding: 40px; border: 1px solid #dee2e6; border-radius: 8px; }
+    .form-title { font-size: 1.8rem; margin-bottom: 25px; color: #212529; font-weight: bold; text-align: center; }
+    
+    .form-group { margin-bottom: 20px; display: flex; flex-direction: column; }
+    .form-group label { font-size: 0.95rem; font-weight: 600; margin-bottom: 8px; color: #495057; }
+    .form-control { padding: 10px; font-size: 1rem; border: 1px solid #ced4da; border-radius: 4px; font-family: inherit; }
+    .form-control:focus { border-color: #0d6efd; outline: none; }
+    
+    textarea.form-control { resize: vertical; min-height: 150px; }
+    .btn-submit { width: 100%; padding: 12px; background-color: #0d6efd; color: white; border: none; border-radius: 4px; font-size: 1rem; font-weight: bold; cursor: pointer; margin-top: 10px; }
+    .btn-submit:hover { background-color: #0b5ed7; }
+</style>
+
+<div class="form-container">
+    <h2 class="form-title">📝 새 아이디어 등록</h2>
+    
+    <form action="{% url 'idea_create' %}" method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        
+        <div class="form-group">
+            <label for="title">아이디어 제목</label>
+            <input type="text" id="title" name="title" class="form-control" placeholder="제목을 입력하세요" required>
+        </div>
+
+        <div class="form-group">
+            <label for="devtool">사용 개발 툴</label>
+            <select id="devtool" name="devtool" class="form-control" required>
+                <option value="" disabled selected>개발 툴을 선택해주세요</option>
+                {% for tool in devtools %}
+                    <option value="{{ tool.id }}">{{ tool.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="interest">초기 관심도</label>
+            <input type="number" id="interest" name="interest" class="form-control" value="0" min="0">
+        </div>
+
+        <div class="form-group">
+            <label for="image">썸네일 이미지</label>
+            <input type="file" id="image" name="image" class="form-control" accept="image/*" required>
+        </div>
+
+        <div class="form-group">
+            <label for="content">아이디어 상세 내용</label>
+            <textarea id="content" name="content" class="form-control" placeholder="아이디어 상세 설명을 적어주세요" required></textarea>
+        </div>
+
+        <button type="submit" class="btn-submit">아이디어 등록하기</button>
+    </form>
+</div>
+{% endblock %}

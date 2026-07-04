@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>아이디어 디렉토리</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8f9fa; color: #333; line-height: 1.6; }
+        a { text-decoration: none; color: inherit; }
+
+        .navbar { background-color: #212529; color: #fff; padding: 15px 0; }
+        .nav-container { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; padding: 0 20px; }
+        .navbar-brand { font-size: 1.5rem; font-weight: bold; }
+        
+        .nav-links { display: flex; gap: 15px; align-items: center; }
+        .nav-item { color: #fff; font-size: 0.95rem; font-weight: 500; padding: 6px 12px; border-radius: 4px; transition: background 0.2s; }
+        .nav-item:hover { background-color: #343a40; }
+        .nav-item.highlight-blue { background-color: #0d6efd; }
+        .nav-item.highlight-blue:hover { background-color: #0b5ed7; }
+        .nav-item.highlight-green { background-color: #198754; }
+        .nav-item.highlight-green:hover { background-color: #157347; }
+
+        .container { max-width: 1200px; margin: 40px auto; padding: 0 20px; }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a class="navbar-brand" href="{% url 'idea_list' %}">💡 IdeaBank</a>
+            <div class="nav-links">
+                <a href="{% url 'idea_list' %}" class="nav-item">아이디어 목록 보기</a>
+                <a href="{% url 'idea_create' %}" class="nav-item highlight-blue">아이디어 등록하기</a>
+                <a href="{% url 'devtool_list' %}" class="nav-item">디테일 툴 목록 보기</a>
+                <a href="{% url 'devtool_create' %}" class="nav-item highlight-green">디테일 툴 등록하기</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        {% block content %}{% endblock %}
+    </div>
+
+</body>
+</html>
