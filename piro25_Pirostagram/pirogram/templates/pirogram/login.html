@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>로그인 • Pirostagram</title>
+    <style>
+        body { background-color: #fafafa; font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .box { background: #fff; border: 1px solid #dbdbdb; padding: 40px; width: 350px; text-align: center; border-radius: 8px; }
+        h1 { font-style: italic; margin-bottom: 30px; font-size: 28px; }
+        input { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #dbdbdb; border-radius: 4px; box-sizing: border-box; background: #fafafa; }
+        button { width: 100%; padding: 10px; background-color: #0095f6; border: none; color: #fff; font-weight: bold; border-radius: 4px; cursor: pointer; margin-top: 10px; }
+        a { color: #0095f6; text-decoration: none; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <h1>Pirostagram</h1>
+        <form method="POST">
+            {% csrf_token %}
+            <input type="text" name="username" placeholder="사용자 이름(ID)" required>
+            <input type="password" name="password" placeholder="비밀번호" required>
+            <button type="submit">로그인</button>
+        </form>
+        <div style="margin-top: 20px; font-size: 14px; color: #737373;">
+            계정이 없으신가요? <a href="{% url 'pirogram:signup' %}">가입하기</a>
+        </div>
+    </div>
+</body>
+</html>

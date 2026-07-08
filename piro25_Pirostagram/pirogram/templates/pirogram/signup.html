@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>회원가입 • Pirostagram</title>
+    <style>
+        body { background-color: #fafafa; font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .box { background: #fff; border: 1px solid #dbdbdb; padding: 40px; width: 350px; text-align: center; border-radius: 8px; }
+        h1 { font-style: italic; margin-bottom: 30px; font-size: 28px; }
+        input[type="text"], input[type="password"] { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #dbdbdb; border-radius: 4px; box-sizing: border-box; background: #fafafa; }
+        
+        /* 💡 프로필 이미지 인풋 스타일링 */
+        .file-group { margin-bottom: 15px; text-align: left; }
+        .file-group label { display: block; font-size: 12px; color: #737373; margin-bottom: 5px; font-weight: bold; }
+        .file-group input[type="file"] { width: 100%; font-size: 12px; color: #737373; }
+
+        button { width: 100%; padding: 10px; background-color: #0095f6; border: none; color: #fff; font-weight: bold; border-radius: 4px; cursor: pointer; margin-top: 10px; }
+        a { color: #0095f6; text-decoration: none; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <h1>Pirostagram</h1>
+        <form method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+            <input type="text" name="username" placeholder="사용자 이름(ID)" required>
+            <input type="password" name="password" placeholder="비밀번호" required>
+            
+            <div class="file-group">
+                <label for="profile_image">프로필 사진 (선택)</label>
+                <input type="file" id="profile_image" name="profile_image" accept="image/*">
+            </div>
+
+            <button type="submit">가입하기</button>
+        </form>
+        <div style="margin-top: 20px; font-size: 14px; color: #737373;">
+            계정이 있으신가요? <a href="{% url 'pirogram:login' %}">로그인</a>
+        </div>
+    </div>
+</body>
+</html>
