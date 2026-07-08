@@ -13,9 +13,10 @@ urlpatterns = [
     
     # 2. 게시글 작성 페이지 (localhost:8000/post/create/)
     path('post/create/', views.post_create, name='post_create'),
-    
-    # 3. 게시글 삭제 기능 (localhost:8000/post/1/delete/)
+    path('post/<int:post_id>/update/', views.post_update, name='post_update'),
     path('post/<int:post_id>/delete/', views.post_delete, name='post_delete'),
+    
+
     
     # 4. 댓글 작성 기능 (비동기 처리 예정)
     path('post/<int:post_id>/comment/', views.comment_create, name='comment_create'),

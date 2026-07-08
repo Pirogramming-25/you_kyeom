@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>게시물 수정 • Pirostagram</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { 
+            background-color: #fafafa; 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            display: flex; justify-content: center; align-items: center; height: 100vh; 
+        }
+        .container { 
+            background: #fff; border: 1px solid #dbdbdb; padding: 30px; 
+            width: 500px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); 
+        }
+        h2 { font-size: 20px; font-weight: 600; margin-bottom: 20px; text-align: center; color: #262626; }
+        
+        .current-img-box { margin-bottom: 15px; text-align: center; }
+        .current-img-box img { max-width: 100%; max-height: 200px; border-radius: 8px; border: 1px solid #efefef; }
+        .img-label { font-size: 12px; color: #737373; display: block; margin-bottom: 5px; }
+
+        label { font-size: 14px; font-weight: bold; color: #262626; display: block; margin-bottom: 8px; }
+        input[type="file"] { width: 100%; margin-bottom: 20px; font-size: 13px; }
+        
+        textarea { 
+            width: 100%; height: 120px; padding: 12px; border: 1px solid #dbdbdb; 
+            border-radius: 8px; resize: none; font-size: 14px; outline: none; margin-bottom: 20px;
+        }
+        textarea:focus { border-color: #a8a8a8; }
+        
+        .btn-group { display: flex; gap: 10px; }
+        button { 
+            flex: 1; padding: 12px; border: none; font-weight: bold; border-radius: 8px; cursor: pointer; font-size: 14px; 
+        }
+        .btn-submit { background-color: #0095f6; color: #fff; }
+        .btn-submit:hover { background-color: #1877f2; }
+        .btn-cancel { background-color: #efefef; color: #262626; text-align: center; text-decoration: none; display: block; line-height: 1.5; }
+        .btn-cancel:hover { background-color: #dbdbdb; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>게시물 수정하기</h2>
+        
+        <form method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            <div class="current-img-box">
+                <span class="img-label">현재 등록된 사진</span>
+                {% if post.image %}
+                    <img src="{{ post.image.url }}" alt="현재 이미지">
+                {% endif %}
+            </div>
+
+            <label for="image">사진 바꾸기 (선택)</label>
+            <input type="file" id="image" name="image" accept="image/*">
+
+            <label for="content">문구 수정</label>
+            <textarea id="content" name="content" placeholder="문구를 입력하세요..." required>{{ post.content }}</textarea>
+            
+            <div class="btn-group">
+                <a href="{% url 'pirogram:main_feed' %}" class="btn-cancel">취소</a>
+                <button type="submit" class="btn-submit">수정 완료</button>
+            </div>
+        </form>
+    </div>
+
+</body>
+</html>

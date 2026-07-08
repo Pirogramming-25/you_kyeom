@@ -415,9 +415,25 @@
                 </div>
                 <div class="text-wrapper">게시글 만들기</div>
             </div>
-            <div class="profile-link">
-                <div class="ellipse"></div>
-                <div class="text-wrapper">프로필</div>
+            <div class="sidebar-profile-box" style="display: flex; align-items: center; gap: 16px; padding: 12px; width: 100%; box-sizing: border-box;">
+                {% if request.user.is_authenticated %}
+                    {% if request.user.profile_image %}
+                        <img src="{{ request.user.profile_image.url }}" class="sidebar-avatar" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover; border: 1px solid #dbdbdb;" />
+                    {% else %}
+                        <img src="{% static 'image/Ellipse 46.svg' %}" class="sidebar-avatar" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover; border: 1px solid #dbdbdb;" />
+                    {% endif %}
+                {% else %}
+                    <img src="{% static 'image/Ellipse 46.svg' %}" class="sidebar-avatar" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover; border: 1px solid #dbdbdb;" />
+                {% endif %}
+
+                <div class="sidebar-user-info" style="display: flex; flex-direction: column;">
+                    {% if request.user.is_authenticated %}
+                        <span class="text-wrapper">프로필</span>
+                    {% else %}
+                        <a href="{% url 'pirogram:login' %}" style="font-weight: bold; font-size: 14px; color: #0095f6; text-decoration: none;">로그인 하세요</a>
+                    {% endif %}
+                </div>
+
             </div>
         </div>
     </div>
@@ -436,16 +452,28 @@
         <div class="feed-scroll-box">
             {% for post in posts %}
             <div class="view-2">
-                <div class="frame-3">
-                    {% if post.author.profile_image %}
-                        <img src="{{ post.author.profile_image.url }}" class="ellipse-3" style="object-fit: cover;" />
-                    {% else %}
-                        <div class="ellipse-3"></div>
-                    {% endif %}
-                    <div class="text-wrapper-3">{{ post.author.username }}</div>
-                    <div class="div">
-                        <img class="vector-7" src="{% static 'image/Frame-3.svg' %}" />
+                <div class="frame-3" style="display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 8px 12px; box-sizing: border-box;">
+    
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        {% if post.author.profile_image %}
+                            <img src="{{ post.author.profile_image.url }}" class="ellipse-3" style="object-fit: cover; margin: 0;" />
+                        {% else %}
+                            <img src="{% static 'image/Ellipse 46.svg' %}" class="ellipse-3" style="object-fit: cover; margin: 0;" />
+                        {% endif %}
+                        <div class="text-wrapper-3" style="margin: 0; font-weight: bold;">{{ post.author.username }}</div>
                     </div>
+                    
+                    <div class="div" style="position: relative; cursor: pointer; display: flex; align-items: center;">
+                        <img class="vector-7" src="{% static 'image/Frame-3.svg' %}" onclick="togglePostMenu(event, '{{ post.id }}')"  />
+                        
+                        {% if post.author == request.user %}
+                        <div id="menu-{{ post.id }}" class="post-dropdown" style="display: none; position: absolute; top: 32px; right: 0; background: #fff; border: 1px solid #dbdbdb; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 999; width: 80px; text-align: center; overflow: hidden;">
+                            <a href="{% url 'pirogram:post_update' post.id %}" style="display: block; padding: 10px 0; font-size: 13px; color: #262626; text-decoration: none; border-bottom: 1px solid #efefef; font-weight: normal;">수정</a>
+                            <a href="{% url 'pirogram:post_delete' post.id %}" onclick="return confirm('정말 이 게시글을 삭제하시겠습니까?')" style="display: block; padding: 10px 0; font-size: 13px; color: #ed4956; text-decoration: none; font-weight: bold;">삭제</a>
+                        </div>
+                        {% endif %}
+                    </div>
+
                 </div>
                 
                 <div class="frame-4">
@@ -457,10 +485,17 @@
                 <div class="frame-wrapper">
                     <div class="frame-5">
                         <div class="frame-6">
-                            <div class="frame-7">
-                                <div class="div"><img class="vector-10" src="{% static 'image/Frame-1.svg' %}" /></div>
-                                <div class="text-wrapper-4">{{ post.like_users.count }}</div>
+                            <div class="frame-7" onclick="toggleLike('{{ post.id }}')" style="cursor: pointer;">
+                                <div class="div">
+                                    {% if request.user in post.like_users.all %}
+                                        <img id="like-icon-{{ post.id }}" class="vector-10" src="{% static 'image/Frame-1-red.svg' %}" />
+                                    {% else %}
+                                        <img id="like-icon-{{ post.id }}" class="vector-10" src="{% static 'image/Frame-1.svg' %}" />
+                                    {% endif %}
+                                </div>
+                                <div id="like-count-{{ post.id }}" class="text-wrapper-4">{{ post.like_users.count }}</div>
                             </div>
+                            
                             <div class="frame-7">
                                 <div class="div"><img class="vector-11" src="{% static 'image/Frame-2.svg' %}" /></div>
                                 <div class="text-wrapper-4">{{ post.comments.count }}</div>
@@ -547,5 +582,60 @@
     document.querySelector('.create-post-link').addEventListener('click', function() {
         window.location.href = "{% url 'pirogram:post_create' %}";
     });
+</script>
+<script>
+    function togglePostMenu(event, postId) {
+        // 이벤트 버블링을 막아 다른 window 클릭 이벤트와 겹치지 않게 합니다.
+        event.stopPropagation();
+
+        // 1. 현재 열려 있는 다른 게시물의 메뉴가 있다면 전부 닫아줍니다.
+        document.querySelectorAll('.post-dropdown').forEach(dropdown => {
+            if (dropdown.id !== 'menu-' + postId) {
+                dropdown.style.display = 'none';
+            }
+        });
+
+        // 2. 내가 클릭한 게시물의 메뉴창만 켜고 끕니다.
+        const targetMenu = document.getElementById('menu-' + postId);
+        if (targetMenu) {
+            if (targetMenu.style.display === 'none' || targetMenu.style.display === '') {
+                targetMenu.style.display = 'block';
+            } else {
+                targetMenu.style.display = 'none';
+            }
+        }
+    }
+
+    // 3. 드롭다운 메뉴 바깥 영역 아무 곳이나 클릭하면 메뉴 창이 자동으로 꺼지도록 처리
+    window.addEventListener('click', function() {
+        document.querySelectorAll('.post-dropdown').forEach(dropdown => {
+            dropdown.style.display = 'none';
+        });
+    });
+</script>
+
+<script>
+function toggleLike(postId) {
+    fetch(`/post/${postId}/like/`, {
+        method: 'GET',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        const likeIcon = document.getElementById(`like-icon-${postId}`);
+        const likeCount = document.getElementById(`like-count-${postId}`);
+        
+        // 서버 응답 결과에 따라 새로고침 없이 이미지와 숫자만 싹 체인지!
+        if (data.liked) {
+            likeIcon.src = "{% static 'image/Frame-1-red.svg' %}";
+        } else {
+            likeIcon.src = "{% static 'image/Frame-1.svg' %}";
+        }
+        likeCount.innerText = data.like_count;
+    })
+    .catch(error => console.error('Error:', error));
+}
 </script>
 </html>

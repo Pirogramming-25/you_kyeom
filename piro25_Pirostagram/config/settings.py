@@ -119,7 +119,7 @@ USE_TZ = True
 STATIC_URL = 'static/'
 
 AUTH_USER_MODEL = 'pirogram.User'
-
+LOGIN_URL = 'login'
 import os
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'pirogram', 'static'),
