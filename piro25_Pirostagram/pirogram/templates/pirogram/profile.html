@@ -1,0 +1,312 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>Pirostagram - 프로필</title>
+    <style>
+    /* 기본 리셋 스타일 */
+    * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+        background-color: #fff;
+        color: #262626;
+        display: flex;
+        justify-content: center;
+    }
+
+    /* 전체 레이아웃 구성 */
+    .screen {
+        display: flex;
+        width: 100%;
+        max-width: 1200px;
+        height: 100vh;
+        position: relative;
+    }
+
+    /* ----------------------------------------------------
+        1. 좌측 사이드바 (Sidebar)
+    ---------------------------------------------------- */
+    .sidebar {
+        width: 400px;
+        height: 100vh;
+        
+        padding: 40px 24px;
+        display: flex;
+        flex-direction: column;
+        position: fixed;
+        left: 0;
+        top: 0;
+        border: 2px solid rgba(0, 0, 0, 0.51);
+        background: #FFF;
+        box-shadow: 4px 0 4px 0 rgba(0, 0, 0, 0.25);
+    }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 40px;
+            padding-left: 8px;
+        }
+
+        .logo-container .img {
+            width: 32px;
+            height: 32px;
+            object-fit: contain;
+        }
+
+        .logo-text {
+            font-size: 22px;
+            font-weight: bold;
+            font-style: italic;
+        }
+
+        .menu {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .menu > div {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 12px;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: background 0.2s;
+        }
+
+        .menu > div:hover {
+            background-color: #f2f2f2;
+        }
+
+        .menu .div {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .menu .div img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        
+        .menu .ellipse {
+            width: 24px;
+            height: 24px;
+            background-color: #efefef;
+            border: 1px solid #dbdbdb;
+            border-radius: 50%;
+        }
+
+        .text-wrapper {
+            font-size: 16px;
+            font-weight: 500;
+        }
+        
+        .search-modal {
+            display: none;
+            position: flex; /* 절대 위치 */
+            z-index: 1000;
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            border: 1px solid #dbdbdb;
+        }
+        .search-modal-content { width: 250px; } 
+
+        /* 메인 프로필 영역 */
+        .main-content { margin-left: 400px; flex: 1; padding: 40px 10%; box-sizing: border-box; }
+        
+        /* 프로필 정보 헤더 */
+        .profile-header { display: flex; align-items: center; gap: 60px; padding-bottom: 40px; border-bottom: 1px solid #dbdbdb; margin-bottom: 30px; }
+        .profile-img-container img { width: 150px; height: 150px; border-radius: 50%; object-fit: cover; border: 1px solid #dbdbdb; }
+        .profile-info { display: flex; flex-direction: column; gap: 15px; }
+        .info-top { display: flex; align-items: center; gap: 20px; }
+        .username { font-size: 28px; font-weight: 300; }
+        .edit-btn { padding: 5px 15px; border: 1px solid #dbdbdb; border-radius: 4px; background: #fff; font-weight: bold; cursor: pointer; font-size: 14px; text-decoration: none; color: #000; }
+        .info-stats { display: flex; gap: 40px; list-style: none; padding: 0; margin: 0; font-size: 16px; }
+        .info-stats span { font-weight: bold; }
+        .bio { font-size: 15px; color: #262626; line-height: 1.4; }
+        .btn-profile-gray {
+            background-color: #efefef ;
+            color: #000000 ;
+        }
+        .btn-profile-blue {
+            background-color: #0095f6 ;
+            color: white ;
+        }
+
+        /* 4열 게시글 이미지 그리드 레이아웃 */
+        .posts-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+        .grid-item { position: relative; width: 100%; padding-bottom: 100%; /* 1:1 정사각형 유지 */ overflow: hidden; background-color: #efefef; cursor: pointer; border-radius: 4px; }
+        .grid-item img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <div class="logo-container">
+            <img class="img" src="{% static 'image/frame-7.svg' %}" />
+            <div class="logo-text">Pirostagram</div>
+        </div>
+        <div class="menu">
+            <div class="home-link">
+                <div class="div">
+                    <img class="vector" src="{% static 'image/frame-6.svg' %}" />
+                </div>
+                <div class="text-wrapper">홈</div>
+            </div>
+            <div class="search-user-link" onclick="toggleSearchPanel()" style="cursor: pointer;">
+                <div class="div">
+                    <img class="vector-3" src="{% static 'image/frame-5.svg' %}" />
+                </div>
+                <div class="text-wrapper">유저 검색</div>
+            </div>
+
+            <div id="search-modal" class="search-modal" style="display: none;" >
+                <div class="search-modal-content">
+                    <h3>유저 검색</h3>
+                    <form action="{% url 'pirogram:search' %}" method="GET">
+                        <input type="text" name="query" placeholder="유저 아이디 입력..." required>
+                        <button type="submit">검색</button>
+                    </form>
+                </div>
+            </div>
+
+            
+            <div class="create-post-link">
+                <div class="div">
+                    <img class="vector-4" src="{% static 'image/frame-4.svg' %}" />
+                </div>
+                <div class="text-wrapper">게시글 만들기</div>
+            </div>
+            <div class="sidebar-profile-box" style="display: flex; align-items: center; gap: 16px; padding: 12px; width: 100%; box-sizing: border-box;">
+                {% if request.user.is_authenticated %}
+                    {% if request.user.profile_image %}
+                        <img src="{{ request.user.profile_image.url }}" class="sidebar-avatar" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover; border: 1px solid #dbdbdb;" />
+                    {% else %}
+                        <img src="{% static 'image/Ellipse 46.svg' %}" class="sidebar-avatar" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover; border: 1px solid #dbdbdb;" />
+                    {% endif %}
+                {% else %}
+                    <img src="{% static 'image/Ellipse 46.svg' %}" class="sidebar-avatar" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover; border: 1px solid #dbdbdb;" />
+                {% endif %}
+
+                <div class="sidebar-user-info" style="display: flex; flex-direction: column;">
+                    {% if request.user.is_authenticated %}
+                        <span class="text-wrapper">프로필</span>
+                    {% else %}
+                        <a href="{% url 'pirogram:login' %}" style="font-weight: bold; font-size: 14px; color: #0095f6; text-decoration: none;">로그인 하세요</a>
+                    {% endif %}
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+
+    <div class="main-content">
+        <div class="profile-header">
+            <div class="profile-img-container">
+                {% if profile_user.profile_image %}
+                    <img src="{{ profile_user.profile_image.url }}" alt="프로필 사진">
+                {% else %}
+                    <img src="{% static 'image/Ellipse 46.svg' %}" alt="기본 프로필">
+                {% endif %}
+            </div>
+
+            <div class="profile-info">
+                <div class="info-top">
+                    <span class="username">{{ profile_user.username }}</span>
+                    {% if profile_user == request.user %}
+                        <a href="{% url 'pirogram:profile_update' %}" class="edit-btn" style="text-decoration: none;">프로필 수정하기</a>
+                    {% else %}
+                        <form action="{% url 'pirogram:user_follow' profile_user.id %}" method="POST" style="display:inline; margin: 0;">
+                            {% csrf_token %}
+                            <button type="submit" 
+                                    class="follow-btn {% if profile_user in request.user.followings.all %}btn-profile-gray{% else %}btn-profile-blue{% endif %}" 
+                                    style="padding: 6px 18px; border-radius: 4px; border: none; font-weight: bold; font-size: 14px; cursor: pointer;">
+                                
+                                {% if profile_user in request.user.followings.all %}팔로잉{% else %}팔로우{% endif %}
+                            </button>
+                        </form>
+                    {% endif %}
+                </div>
+                
+                <ul class="info-stats">
+                    <li>게시물 <span>{{ posts_count }}</span></li>
+                    <li>팔로워 <span>{{ followers_count }}</span></li>
+                    <li>팔로우 <span>{{ followings_count }}</span></li>
+                </ul>
+                
+                <div class="bio">
+                    <strong>소개글</strong><br>
+                    {% if profile_user.bio %}
+                        {{ profile_user.bio }}
+                    {% else %}
+                        아직 작성된 소개글이 없습니다.
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="posts-grid">
+            {% for post in posts %}
+                <div class="grid-item">
+                    {% if post.image %}
+                        <img src="{{ post.image.url }}" alt="게시글 이미지">
+                    {% endif %}
+                </div>
+            {% empty %}
+                <div style="grid-column: span 4; text-align: center; color: #737373; padding: 40px 0;">
+                    작성된 게시글이 없습니다.
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+</body>
+</html>
+<script>
+    // 💡 원래 있던 디자인 클래스(.create-post-link)를 찾아서 클릭 시 작성 페이지로 이동시킵니다.
+    document.querySelector('.create-post-link').addEventListener('click', function() {
+        window.location.href = "{% url 'pirogram:post_create' %}";
+    });
+
+    document.querySelector('.home-link').addEventListener('click', function() {
+        window.location.href = "{% url 'pirogram:main_feed' %}";
+    });
+
+    document.querySelector('.sidebar-profile-box').addEventListener('click', function() {
+            window.location.href = "{% url 'pirogram:profile' %}";
+        });
+    
+    function toggleSearchPanel() {
+        const modal = document.getElementById('search-modal');
+        // 현재 상태를 확인해서 반대로 바꿈
+        if (modal.style.display === "none" || modal.style.display === "") {
+            modal.style.display = "block";
+        } else {
+            modal.style.display = "none";
+        }
+    }
+
+    
+    window.onclick = function(event) {
+        const modal = document.getElementById('search-modal');
+        if (event.target == modal) {
+            modal.style.display = "none";
+        }
+    }
+</script>

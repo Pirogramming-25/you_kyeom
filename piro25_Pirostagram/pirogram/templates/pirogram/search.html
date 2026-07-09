@@ -1,0 +1,82 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>Pirostagram 검색 결과</title>
+    <style>
+        
+        /* 검색 페이지 전용 스타일 */
+        body { font-family: 'Arial', sans-serif; margin: 0; padding: 0; background-color: #fafafa; }
+        .logo-header { text-align: center; padding: 40px 0; }
+        .logo-text { font-size: 40px;
+            font-weight: bold;
+            font-style: italic; }
+        .search-title { text-align: center; color: #333; margin-bottom: 30px; }
+        
+        .search-results-list { max-width: 500px; margin: 0 auto; }
+        .user-card { 
+            border: 2px solid #333; border-radius: 15px; padding: 15px; 
+            margin-bottom: 15px; display: flex; align-items: center; background: white; 
+        }
+        .profile-img { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; margin-right: 15px; }
+        .user-info { flex: 1; }
+        
+        .home-link { text-align: center; margin-top: 30px; display: block; color: #333; }
+        .btn-follow-blue {
+            background-color: #007bff !important;
+            color: white !important;
+        }
+
+        .btn-following-gray {
+            background-color: #e0e0e0 !important;
+            color: #757575 !important;
+        }
+    </style>
+</head>
+<body>
+
+    <header class="logo-header">
+        <h1 class="logo-text">Pirostagram</h1>
+    </header>
+
+    <h2 class="search-title">"{{ query }}"로 검색한 결과</h2>
+
+    <div class="search-results-list">
+        {% for user in users %}
+        <div class="user-card">
+            <a href="{% url 'pirogram:user_profile' user.id %}" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 12px; flex: 1;">    
+                {% if user.profile_image %}
+                    <img src="{{ user.profile_image.url }}" class="profile-img">
+                {% else %}
+                    <img src="{% static 'image/Ellipse 46.svg' %}" class="profile-img">
+                {% endif %}
+            
+                <div class="user-info">
+                    <strong>{{ user.username }}</strong>
+                </div>
+            </a>
+            {% if user == request.user %}
+                <button class="follow-btn" style="padding: 8px 16px; border-radius: 5px; border: none; background-color: #e0e0e0; color: #757575; cursor: default;">
+                    나
+                </button>
+            {% else %}
+                <form action="{% url 'pirogram:user_follow' user.id %}" method="POST" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit" 
+                            class="follow-btn {% if user in request.user.followings.all %}btn-following-gray{% else %}btn-follow-blue{% endif %}" 
+                            style="padding: 8px 16px; border-radius: 5px; border: none; cursor: pointer;">
+                        {% if user in request.user.followings.all %}팔로잉{% else %}팔로우{% endif %}
+                    </button>
+                </form>
+            {% endif %}
+        </div>
+        {% empty %}
+        <p style="text-align: center;">검색 결과가 없습니다.</p>
+        {% endfor %}
+    </div>
+
+    <a href="{% url 'pirogram:main_feed' %}" class="home-link">홈으로 돌아가기</a>
+
+</body>
+</html>
