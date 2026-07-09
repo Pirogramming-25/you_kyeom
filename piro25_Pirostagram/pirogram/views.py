@@ -2,7 +2,42 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login as auth_login, logout as auth_logout, authenticate
 from django.contrib.auth.decorators import login_required
-from .models import Post, User
+from .models import Post, User, Comment, Story
+from django.contrib.auth import get_user_model
+from django.db.models import Q,Count
+User = get_user_model()
+
+from .forms import ProfileUpdateForm
+
+def search(request):
+    query = request.GET.get('query', '') # 검색어 가져오기
+    users = None
+    
+    if query:
+        users = User.objects.filter(username__icontains=query)
+    
+    return render(request, 'pirogram/search.html', {
+        'users': users,
+        'query': query
+    })
+
+def post_search_view(request):
+    query = request.GET.get('q', '') # 검색창 input의 name='q' 값을 가져옴
+    posts = Post.objects.all()
+    
+    if query:
+        # Q 객체를 사용하면 OR(|) 조건으로 여러 필드를 한 번에 검색할 수 있습니다.
+        # 내용(content)에 포함되거나, 작성자 이름(username)에 포함된 경우 필터링
+        posts = posts.filter(
+            Q(content__icontains=query) | 
+            Q(author__username__icontains=query)
+        ).distinct().order_by('-created_at')
+        
+    context = {
+        'posts': posts,
+        'query': query,
+    }
+    return render(request, 'pirogram/post_search.html', context)
 
 def signup_view(request):
     if request.method == 'POST':
@@ -44,7 +79,7 @@ def login_view(request):
             
     return render(request, 'pirogram/login.html')
 
-# 🚪 3. 로그아웃 뷰
+#  3. 로그아웃 뷰
 def logout_view(request):
     auth_logout(request)
     return redirect('pirogram:main_feed')
@@ -54,11 +89,59 @@ def logout_view(request):
 
 # 1. 메인 피드 뷰
 def main_feed(request):
-    posts = Post.objects.all().order_by('-created_at').prefetch_related('comments')
-    return render(request, 'pirogram/main_feed.html', {'posts': posts})
+    if not request.user.is_authenticated:
+        return redirect('pirogram:login') 
+    
+    query = request.GET.get('q', '')
+    sort_by = request.GET.get('sort', 'latest')
 
-# 2. 게시글 작성 뷰 (에러 원인 해결!)
-@login_required(login_url='pirogram:login') # 💡 로그인 안 한 유저가 접근하면 로그인 창으로 안내합니다.
+    following_users = request.user.followings.all()
+    target_users = list(following_users) + [request.user]
+    posts = Post.objects.filter(author__in=target_users).order_by('-created_at')
+    if query:
+        posts = posts.filter(
+            Q(content__icontains=query) |
+            Q(author__username__icontains=query)
+        ).distinct()
+    recommended_users = User.objects.exclude(pk=request.user.pk).order_by('-date_joined')[:5]
+
+    active_stories = Story.objects.order_by('-created_at')
+    stories_groups = []
+    for user in target_users:
+        user_stories = list(Story.objects.filter(author=user).order_by('created_at'))
+        if user_stories:
+            stories_groups.append({
+                'user': user,
+                'thumbnail': user_stories[-1],
+                'all_stories': user_stories,
+                'latest_story_time': user_stories[-1].created_at
+            })
+    stories_groups.sort(key=lambda x: x['latest_story_time'], reverse=True)
+    posts = posts.annotate(
+        likes_count=Count('like_users'), 
+        comments_count=Count('comments') 
+    )
+
+    if sort_by == 'likes':
+        # 좋아요 많은 순 -> 같으면 최신순
+        posts = posts.order_by('-likes_count', '-created_at')
+    elif sort_by == 'comments':
+        # 댓글 많은 순 -> 같으면 최신순
+        posts = posts.order_by('-comments_count', '-created_at')
+    else:
+        # 기본값: 최신순
+        posts = posts.order_by('-created_at')
+    context = {
+        'posts': posts,
+        'story_groups': stories_groups, 
+        'recommended_users': recommended_users,
+        'query': query,
+        'sort_by': sort_by,
+    }
+    return render(request, 'pirogram/main_feed.html', context)
+
+# 2. 게시글 작성 뷰 
+@login_required(login_url='pirogram:login') # 
 def post_create(request):
     if request.method == 'POST':
         image = request.FILES.get('image')     # 업로드된 이미지 파일
@@ -79,7 +162,7 @@ def post_update(request, post_id):
     # 1. 수정할 게시글 객체를 가져옵니다. 없으면 404 에러를 띄웁니다.
     post = get_object_or_404(Post, pk=post_id)
     
-    # 🔒 보안: 현재 로그인한 사람이 이 글의 작성자가 아니면 메인 피드로 튕겨냅니다.
+    # 보안: 현재 로그인한 사람이 이 글의 작성자가 아니면 메인 피드로 튕겨냅니다.
     if post.author != request.user:
         return redirect('pirogram:main_feed')
         
@@ -97,17 +180,15 @@ def post_update(request, post_id):
     # GET 요청 시: 기존 게시글 데이터(post)를 템플릿에 담아서 던져줍니다.
     return render(request, 'pirogram/post_update.html', {'post': post})
 
-# ❌ 게시글 삭제 뷰
+#  게시글 삭제 뷰
 @login_required(login_url='pirogram:login')
 def post_delete(request, post_id):
     post = get_object_or_404(Post, pk=post_id)
     
-    # 🔒 보안: 글쓴이 본인만 삭제할 수 있도록 검증합니다.
     if post.author == request.user:
         post.delete()
         return redirect('pirogram:main_feed')
     
-    # 🙅‍♂️ 만약 다른 사람이 쓴 글을 주소창으로 강제 접근했다면 삭제 안 하고 그냥 메인 피드로!
     else:
         return redirect('pirogram:main_feed')
         
@@ -115,11 +196,46 @@ def post_delete(request, post_id):
 
 
 
-# 4. 댓글 작성 뷰
+#  1. 댓글 작성 (Create)
+@login_required(login_url='pirogram:login')
 def comment_create(request, post_id):
-    pass
+    
+    if request.method == 'POST':
+        post = get_object_or_404(Post, pk=post_id)
+        content = request.POST.get('content')
+        parent_id = request.POST.get('parent_id')
+        if content:
+            comment = Comment(
+                post=post,
+                author=request.user,
+                content=content
+            )
+            if parent_id:
+                parent_comment = get_object_or_404(Comment, pk=parent_id)
+                comment.parent = parent_comment
+            comment.save()
+    return redirect('pirogram:main_feed')
 
-# 📂 pirogram/views.py 맨 아래에 추가
+#  2. 댓글 수정 (Update)
+@login_required(login_url='pirogram:login')
+def comment_update(request, comment_id):
+    comment = get_object_or_404(Comment, pk=comment_id)
+    if comment.author == request.user and request.method == 'POST':
+        content = request.POST.get('content')
+        if content:
+            comment.content = content
+            comment.save()
+    return redirect('pirogram:main_feed')
+
+#  3. 댓글 삭제 (Delete)
+@login_required(login_url='pirogram:login')
+def comment_delete(request, comment_id):
+    comment = get_object_or_404(Comment, pk=comment_id)
+    if comment.author == request.user:
+        comment.delete()
+    return redirect('pirogram:main_feed')
+
+
 from django.http import JsonResponse
 
 @login_required(login_url='pirogram:login')
@@ -135,9 +251,85 @@ def post_like(request, post_id):
         post.like_users.add(user) # 안 눌렀다면 좋아요 추가
         liked = True
 
-    # 💡 결과를 브라우저 자바스크립트(Ajax)에게 JSON 형태로 돌려줍니다.
+    # 결과를 브라우저 자바스크립트(Ajax)에게 JSON 형태로 돌려줍니다.
     context = {
         'liked': liked,
         'like_count': post.like_users.count()
     }
     return JsonResponse(context)
+
+
+@login_required(login_url='pirogram:login')
+def story_create(request):
+    if request.method == 'POST':
+        # HTML input(name="images")에서 여러 파일들을 리스트 형태로 가져옵니다.
+        images = request.FILES.getlist('images')
+        
+        # 받아온 이미지 파일들을 하나씩 순회하며 Story 데이터로 생성 및 저장합니다.
+        for img in images:
+            Story.objects.create(
+                author=request.user,
+                image=img
+            )
+            
+    return redirect('pirogram:main_feed')
+
+@login_required(login_url='pirogram:login')
+def story_delete(request, story_id):
+    if request.method == 'POST':
+        # 내가 작성한 스토리 중에서 해당 ID를 가진 스토리를 찾습니다.
+        story = get_object_or_404(Story, pk=story_id, author=request.user)
+        story.delete() 
+        
+    return redirect('pirogram:main_feed')
+
+
+@login_required
+def user_follow(request, user_id):
+    target_user = get_object_or_404(User, pk=user_id)
+
+    if target_user != request.user:
+        if target_user in request.user.followings.all():
+            request.user.followings.remove(target_user)
+        else:
+            request.user.followings.add(target_user)    
+            
+    return redirect(request.META.get('HTTP_REFERER', 'main_feed'))
+
+
+@login_required
+def profile_view(request, user_id=None):
+    if user_id:
+        profile_user = get_object_or_404(User, pk=user_id)
+    else:
+        profile_user = request.user
+    
+    posts = Post.objects.filter(author=profile_user).order_by('-created_at')
+    
+    followers_count = profile_user.followers.count()
+    followings_count = profile_user.followings.count()
+    posts_count = posts.count()
+    
+    context = {
+        'profile_user': profile_user,
+        'posts': posts,
+        'posts_count': posts_count,
+        'followers_count': followers_count,
+        'followings_count': followings_count,
+    }
+    return render(request, 'pirogram/profile.html', context)
+
+@login_required
+def profile_update_view(request):
+    if request.method == 'POST':
+        # 파일 업로드(이미지)가 있으므로 request.FILES도 반드시 인자로 넘겨야 합니다.
+        form = ProfileUpdateForm(request.POST, request.FILES, instance=request.user)
+        if form.is_valid():
+            form.save()
+            return redirect('pirogram:profile') # 수정 완료 후 프로필 페이지로 이동
+    else:
+        # GET 요청 시 기존 유저 데이터가 pre-fill된 폼을 생성
+        form = ProfileUpdateForm(instance=request.user)
+        
+    return render(request, 'pirogram/profile_update.html', {'form': form})
+
