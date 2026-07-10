@@ -1,26 +1,22 @@
-
-*.log
-local_settings.py
-db.sqlite3
-db.sqlite3-journal
-
-
-/media/
-/static/
-
+.git
+.gitignore
+.DS_Store
 
 __pycache__/
 *.py[cod]
-*$py.class
 
-
-venv/
 .venv/
+venv/
 env/
-ENV/
 
+.env
+.env.*
 
-.vscode/
+db.sqlite3
+*.sqlite3
+*.db
+media/
+staticfiles/
+
 .idea/
-.DS_Store
-Thumbs.db
+.vscode/
