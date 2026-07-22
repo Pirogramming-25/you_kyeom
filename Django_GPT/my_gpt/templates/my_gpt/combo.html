@@ -18,18 +18,17 @@
     <h3>[최종 분석 리포트]</h3>
     
     <h4>1. 요약문</h4>
-    <p id="resSummary" style="background:white; padding:0.5rem; border:1px solid #cbd5e1;"></p>
+    <p id="resSummary" style="background:white; padding:0.8rem; border:1px solid #cbd5e1; border-radius:4px;"></p>
 
-    <h4>2. 감정 분석</h4>
-    <p>Label: <strong id="resSentimentLabel"></strong> (Score: <span id="resSentimentScore"></span>%)</p>
+    <h4>2. 감정 분석 점수 분포</h4>
+    <div id="sentimentBars" style="display: flex; flex-direction: column; gap: 0.6rem; margin-top: 0.5rem; background:white; padding:1rem; border:1px solid #cbd5e1; border-radius:4px;"></div>
 
-    <h4>3. 유해 표현 분석</h4>
-    <p>Highest Risk: <strong id="resToxicLabel" style="color:#ef4444;"></strong> (Score: <span id="resToxicScore"></span>%)</p>
+    <h4 style="margin-top: 1.2rem;">3. 유해 표현 위험도 분포</h4>
+    <div id="toxicBars" style="display: flex; flex-direction: column; gap: 0.6rem; margin-top: 0.5rem; background:white; padding:1rem; border:1px solid #cbd5e1; border-radius:4px;"></div>
 
-    <h4>4. 종합 판정</h4>
-    <p id="resVerdict" style="background:white; padding:0.5rem; border:1px solid #cbd5e1; font-weight:bold; color:#4f46e5;"></p>
+    <h4 style="margin-top: 1.2rem;">4. 종합 판정</h4>
+    <p id="resVerdict" style="background:white; padding:0.8rem; border:1px solid #cbd5e1; border-radius:4px; font-weight:bold; color:#4f46e5;"></p>
 
-    <!-- 재생성 버튼 -->
     <button id="regenBtn" onclick="runCombo(true)" style="margin-top: 1rem; padding: 0.5rem 1rem; background:#10b981; color:white; border:none; border-radius:4px; cursor:pointer;">🔄 재생성하기</button>
 </div>
 
@@ -60,14 +59,14 @@
 
         let text = "";
         if (isRegenerate) {
-            text = lastInputText; // 기존 입력문 유지
+            text = lastInputText;
         } else {
             text = textInput.value.trim();
             if (text.length < 200) {
                 alert("복합 분석 피드백은 200자 이상 입력해주세요.");
                 return;
             }
-            lastInputText = text; // 입력문 저장
+            lastInputText = text;
         }
 
         runBtn.disabled = true;
@@ -90,11 +89,44 @@
             if (!response.ok) throw new Error(data.error || "실패했습니다.");
 
             document.getElementById("resSummary").innerText = data.summary;
-            document.getElementById("resSentimentLabel").innerText = data.sentiment.label;
-            document.getElementById("resSentimentScore").innerText = data.sentiment.score;
-            document.getElementById("resToxicLabel").innerText = data.toxicity.highest_label;
-            document.getElementById("resToxicScore").innerText = data.toxicity.highest_score;
             document.getElementById("resVerdict").innerText = data.verdict;
+
+            // 감정 분석 막대그래프 렌더링
+            const sentimentBars = document.getElementById("sentimentBars");
+            sentimentBars.innerHTML = "";
+            const sentColors = { positive: "#10b981", neutral: "#64748b", negative: "#ef4444" };
+            for (const [label, score] of Object.entries(data.sentiment.all_scores)) {
+                const color = sentColors[label.toLowerCase()] || "#4f46e5";
+                sentimentBars.innerHTML += `
+                    <div>
+                        <div style="display: flex; justify-content: space-between; font-size: 0.9rem; font-weight: bold; margin-bottom: 0.2rem;">
+                            <span style="text-transform: uppercase;">${label}</span>
+                            <span>${score}%</span>
+                        </div>
+                        <div style="background: #e2e8f0; border-radius: 4px; overflow: hidden; height: 12px;">
+                            <div style="width: ${score}%; background: ${color}; height: 100%;"></div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // 유해 표현 막대그래프 렌더링
+            const toxicBars = document.getElementById("toxicBars");
+            toxicBars.innerHTML = "";
+            for (const [label, score] of Object.entries(data.toxicity.all_scores)) {
+                const color = score >= 50 ? "#ef4444" : "#f59e0b";
+                toxicBars.innerHTML += `
+                    <div>
+                        <div style="display: flex; justify-content: space-between; font-size: 0.9rem; font-weight: bold; margin-bottom: 0.2rem;">
+                            <span style="text-transform: uppercase;">${label}</span>
+                            <span>${score}%</span>
+                        </div>
+                        <div style="background: #e2e8f0; border-radius: 4px; overflow: hidden; height: 12px;">
+                            <div style="width: ${score}%; background: ${color}; height: 100%;"></div>
+                        </div>
+                    </div>
+                `;
+            }
 
             resultArea.style.display = "block";
         } catch (err) {
