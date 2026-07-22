@@ -1,0 +1,92 @@
+{% extends 'my_gpt/base.html' %}
+{% load static %}
+{% block title %}유해 표현 분석 - Django GPT{% endblock %}
+{% block content %}
+<h2>🚨 유해 표현 분석</h2>
+<p><strong>사용 모델:</strong> unitary/toxic-bert</p>
+<p><strong>입력 언어:</strong> 영어 (최소 1자 ~ 최대 1,000자)</p>
+
+<div style="margin-top: 1.5rem;">
+    <textarea id="inputText" rows="5" style="width:100%; padding:0.5rem;" placeholder="Enter English text to analyze toxicity..."></textarea>
+    <br>
+    <button id="runBtn" onclick="runModerate()" style="margin-top: 0.5rem; padding: 0.5rem 1rem; background:#4f46e5; color:white; border:none; border-radius:4px; cursor:pointer;">분석 실행</button>
+</div>
+
+<div id="loading" style="display:none; margin-top: 1rem; color: #64748b; font-weight: bold;">처리 중...</div>
+<div id="errorArea" style="display:none; margin-top: 1rem; color: #ef4444;"></div>
+
+<div id="resultArea" style="margin-top: 1.5rem; display:none; background:#f1f5f9; padding:1rem; border-radius:4px;">
+    <h3>[결과]</h3>
+    <p>최고 위험 레이블: <strong id="highestLabel" style="color:#ef4444;"></strong> (<span id="highestScore"></span>%)</p>
+    <h4>전체 레이블 점수:</h4>
+    <ul id="scoreList" style="list-style: none; padding: 0;"></ul>
+</div>
+
+<div style="margin-top: 2rem;">
+    <h3>[최근 기록 (DB)]</h3>
+    <ul style="padding-left: 20px; color: #475569;">
+        {% for history in histories %}
+            <li>{{ history.created_at|date:"Y-m-d H:i" }} - "{{ history.input_text|slice:":30" }}..."</li>
+        {% empty %}
+            <li>최근 기록이 없습니다.</li>
+        {% endfor %}
+    </ul>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'my_gpt/js/common.js' %}"></script>
+<script>
+    async function runModerate() {
+        const textInput = document.getElementById("inputText");
+        const runBtn = document.getElementById("runBtn");
+        const loading = document.getElementById("loading");
+        const errorArea = document.getElementById("errorArea");
+        const resultArea = document.getElementById("resultArea");
+        const scoreList = document.getElementById("scoreList");
+
+        const text = textInput.value.trim();
+        if (!text) {
+            alert("분석할 문장을 입력해주세요.");
+            return;
+        }
+
+        runBtn.disabled = true;
+        textInput.disabled = true;
+        loading.style.display = "block";
+        errorArea.style.display = "none";
+        resultArea.style.display = "none";
+
+        try {
+            const response = await fetch("{% url 'moderate' %}", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": getCookie("csrftoken")
+                },
+                body: JSON.stringify({ text: text })
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || "실패했습니다.");
+
+            document.getElementById("highestLabel").innerText = data.highest_label;
+            document.getElementById("highestScore").innerText = data.highest_score;
+
+            scoreList.innerHTML = "";
+            for (const [label, score] of Object.entries(data.all_scores)) {
+                const li = document.createElement("li");
+                li.innerText = `${label}: ${score}%`;
+                scoreList.appendChild(li);
+            }
+            resultArea.style.display = "block";
+        } catch (err) {
+            errorArea.innerText = err.message;
+            errorArea.style.display = "block";
+        } finally {
+            runBtn.disabled = false;
+            textInput.disabled = false;
+            loading.style.display = "none";
+        }
+    }
+</script>
+{% endblock %}
