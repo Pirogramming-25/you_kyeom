@@ -1,0 +1,107 @@
+{% extends 'my_gpt/base.html' %}
+{% load static %}
+{% block title %}유해 표현 분석 - Django GPT{% endblock %}
+{% block content %}
+<h2>🚨 유해 표현 분석</h2>
+<p><strong>사용 모델:</strong> unitary/toxic-bert</p>
+<p><strong>입력 언어:</strong> 영어 (최소 1자 ~ 최대 1,000자)</p>
+
+<div style="margin-top: 1.5rem;">
+    <textarea id="inputText" rows="5" style="width:100%; padding:0.5rem;" placeholder="Enter English text to analyze toxicity..."></textarea>
+    <br>
+    <button id="runBtn" onclick="runModerate()" style="margin-top: 0.5rem; padding: 0.5rem 1rem; background:#4f46e5; color:white; border:none; border-radius:4px; cursor:pointer;">분석 실행</button>
+</div>
+
+<div id="loading" style="display:none; margin-top: 1rem; color: #64748b; font-weight: bold;">처리 중...</div>
+<div id="errorArea" style="display:none; margin-top: 1rem; color: #ef4444;"></div>
+
+<div id="resultArea" style="margin-top: 1.5rem; display:none; background:#f1f5f9; padding:1.5rem; border-radius:4px;">
+    <h3>[결과 리포트]</h3>
+    <p style="margin-bottom: 1rem;">최고 위험 레이블: <strong id="highestLabel" style="color:#ef4444; text-transform: uppercase;"></strong> (<span id="highestScore"></span>%)</p>
+    
+    <h4>전체 유해성 항목별 위험도</h4>
+    <div id="resultBars" style="display: flex; flex-direction: column; gap: 0.8rem; margin-top: 0.8rem;"></div>
+</div>
+
+<div style="margin-top: 2rem;">
+    <h3>[최근 기록 (DB)]</h3>
+    <ul style="padding-left: 20px; color: #475569;">
+        {% for history in histories %}
+            <li>{{ history.created_at|date:"Y-m-d H:i" }} - "{{ history.input_text|slice:":30" }}..."</li>
+        {% empty %}
+            <li>최근 기록이 없습니다.</li>
+        {% endfor %}
+    </ul>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'my_gpt/js/common.js' %}"></script>
+<script>
+    async function runModerate() {
+        const textInput = document.getElementById("inputText");
+        const runBtn = document.getElementById("runBtn");
+        const loading = document.getElementById("loading");
+        const errorArea = document.getElementById("errorArea");
+        const resultArea = document.getElementById("resultArea");
+        const resultBars = document.getElementById("resultBars");
+
+        const text = textInput.value.trim();
+        if (!text) {
+            alert("분석할 문장을 입력해주세요.");
+            return;
+        }
+
+        runBtn.disabled = true;
+        textInput.disabled = true;
+        loading.style.display = "block";
+        errorArea.style.display = "none";
+        resultArea.style.display = "none";
+
+        try {
+            const response = await fetch("{% url 'moderate' %}", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": getCookie("csrftoken")
+                },
+                body: JSON.stringify({ text: text })
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || "실패했습니다.");
+
+            // 최고 위험 레이블 표시
+            document.getElementById("highestLabel").innerText = data.highest_label;
+            document.getElementById("highestScore").innerText = data.highest_score;
+
+            // 전체 항목별 막대그래프(미터) 렌더링
+            resultBars.innerHTML = "";
+            for (const [label, score] of Object.entries(data.all_scores)) {
+                // 위험도가 높으면 빨간색, 낮으면 주황/초록 계열
+                const barColor = score >= 50 ? "#ef4444" : (score >= 20 ? "#f59e0b" : "#10b981");
+
+                const wrapper = document.createElement("div");
+                wrapper.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 0.9rem; margin-bottom: 0.2rem;">
+                        <span style="text-transform: uppercase;">${label}</span>
+                        <span>${score}%</span>
+                    </div>
+                    <div style="background: #e2e8f0; border-radius: 4px; overflow: hidden; height: 14px;">
+                        <div style="width: ${score}%; background: ${barColor}; height: 100%; transition: width 0.5s ease;"></div>
+                    </div>
+                `;
+                resultBars.appendChild(wrapper);
+            }
+
+            resultArea.style.display = "block";
+        } catch (err) {
+            errorArea.innerText = err.message;
+            errorArea.style.display = "block";
+        } finally {
+            runBtn.disabled = false;
+            textInput.disabled = false;
+            loading.style.display = "none";
+        }
+    }
+</script>
+{% endblock %}

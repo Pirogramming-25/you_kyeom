@@ -1,0 +1,143 @@
+{% extends 'my_gpt/base.html' %}
+{% load static %}
+{% block title %}복합 분석 - Django GPT{% endblock %}
+{% block content %}
+<h2>🔗 복합 AI 분석 리포트 (Challenge)</h2>
+<p><strong>파이프라인:</strong> 고객 피드백 입력 ➔ 문서 요약 ➔ 감정 분석 & 유해 표현 분석 ➔ 종합 판정</p>
+
+<div style="margin-top: 1.5rem;">
+    <textarea id="inputText" rows="6" style="width:100%; padding:0.5rem;" placeholder="Enter customer feedback (min 200 chars)..."></textarea>
+    <br>
+    <button id="runBtn" onclick="runCombo(false)" style="margin-top: 0.5rem; padding: 0.5rem 1rem; background:#4f46e5; color:white; border:none; border-radius:4px; cursor:pointer;">분석 실행</button>
+</div>
+
+<div id="loading" style="display:none; margin-top: 1rem; color: #64748b; font-weight: bold;">처리 중...</div>
+<div id="errorArea" style="display:none; margin-top: 1rem; color: #ef4444;"></div>
+
+<div id="resultArea" style="margin-top: 1.5rem; display:none; background:#f1f5f9; padding:1.5rem; border-radius:4px;">
+    <h3>[최종 분석 리포트]</h3>
+    
+    <h4>1. 요약문</h4>
+    <p id="resSummary" style="background:white; padding:0.8rem; border:1px solid #cbd5e1; border-radius:4px;"></p>
+
+    <h4>2. 감정 분석 점수 분포</h4>
+    <div id="sentimentBars" style="display: flex; flex-direction: column; gap: 0.6rem; margin-top: 0.5rem; background:white; padding:1rem; border:1px solid #cbd5e1; border-radius:4px;"></div>
+
+    <h4 style="margin-top: 1.2rem;">3. 유해 표현 위험도 분포</h4>
+    <div id="toxicBars" style="display: flex; flex-direction: column; gap: 0.6rem; margin-top: 0.5rem; background:white; padding:1rem; border:1px solid #cbd5e1; border-radius:4px;"></div>
+
+    <h4 style="margin-top: 1.2rem;">4. 종합 판정</h4>
+    <p id="resVerdict" style="background:white; padding:0.8rem; border:1px solid #cbd5e1; border-radius:4px; font-weight:bold; color:#4f46e5;"></p>
+
+    <button id="regenBtn" onclick="runCombo(true)" style="margin-top: 1rem; padding: 0.5rem 1rem; background:#10b981; color:white; border:none; border-radius:4px; cursor:pointer;">🔄 재생성하기</button>
+</div>
+
+<div style="margin-top: 2rem;">
+    <h3>[최근 기록 (DB)]</h3>
+    <ul style="padding-left: 20px; color: #475569;">
+        {% for history in histories %}
+            <li>{{ history.created_at|date:"Y-m-d H:i" }} - "{{ history.input_text|slice:":30" }}..."</li>
+        {% empty %}
+            <li>최근 기록이 없습니다.</li>
+        {% endfor %}
+    </ul>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'my_gpt/js/common.js' %}"></script>
+<script>
+    let lastInputText = "";
+
+    async function runCombo(isRegenerate = false) {
+        const textInput = document.getElementById("inputText");
+        const runBtn = document.getElementById("runBtn");
+        const regenBtn = document.getElementById("regenBtn");
+        const loading = document.getElementById("loading");
+        const errorArea = document.getElementById("errorArea");
+        const resultArea = document.getElementById("resultArea");
+
+        let text = "";
+        if (isRegenerate) {
+            text = lastInputText;
+        } else {
+            text = textInput.value.trim();
+            if (text.length < 200) {
+                alert("복합 분석 피드백은 200자 이상 입력해주세요.");
+                return;
+            }
+            lastInputText = text;
+        }
+
+        runBtn.disabled = true;
+        if(regenBtn) regenBtn.disabled = true;
+        textInput.disabled = true;
+        loading.style.display = "block";
+        errorArea.style.display = "none";
+        resultArea.style.display = "none";
+
+        try {
+            const response = await fetch("{% url 'combo' %}", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": getCookie("csrftoken")
+                },
+                body: JSON.stringify({ text: text })
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || "실패했습니다.");
+
+            document.getElementById("resSummary").innerText = data.summary;
+            document.getElementById("resVerdict").innerText = data.verdict;
+
+            // 감정 분석 막대그래프 렌더링
+            const sentimentBars = document.getElementById("sentimentBars");
+            sentimentBars.innerHTML = "";
+            const sentColors = { positive: "#10b981", neutral: "#64748b", negative: "#ef4444" };
+            for (const [label, score] of Object.entries(data.sentiment.all_scores)) {
+                const color = sentColors[label.toLowerCase()] || "#4f46e5";
+                sentimentBars.innerHTML += `
+                    <div>
+                        <div style="display: flex; justify-content: space-between; font-size: 0.9rem; font-weight: bold; margin-bottom: 0.2rem;">
+                            <span style="text-transform: uppercase;">${label}</span>
+                            <span>${score}%</span>
+                        </div>
+                        <div style="background: #e2e8f0; border-radius: 4px; overflow: hidden; height: 12px;">
+                            <div style="width: ${score}%; background: ${color}; height: 100%;"></div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // 유해 표현 막대그래프 렌더링
+            const toxicBars = document.getElementById("toxicBars");
+            toxicBars.innerHTML = "";
+            for (const [label, score] of Object.entries(data.toxicity.all_scores)) {
+                const color = score >= 50 ? "#ef4444" : "#f59e0b";
+                toxicBars.innerHTML += `
+                    <div>
+                        <div style="display: flex; justify-content: space-between; font-size: 0.9rem; font-weight: bold; margin-bottom: 0.2rem;">
+                            <span style="text-transform: uppercase;">${label}</span>
+                            <span>${score}%</span>
+                        </div>
+                        <div style="background: #e2e8f0; border-radius: 4px; overflow: hidden; height: 12px;">
+                            <div style="width: ${score}%; background: ${color}; height: 100%;"></div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            resultArea.style.display = "block";
+        } catch (err) {
+            errorArea.innerText = err.message;
+            errorArea.style.display = "block";
+        } finally {
+            runBtn.disabled = false;
+            if(regenBtn) regenBtn.disabled = false;
+            textInput.disabled = false;
+            loading.style.display = "none";
+        }
+    }
+</script>
+{% endblock %}

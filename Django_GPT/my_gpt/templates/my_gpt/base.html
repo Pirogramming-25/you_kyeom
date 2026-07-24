@@ -1,0 +1,38 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}Django GPT{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'my_gpt/css/style.css' %}">
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <!-- 공통 탭바 -->
+    <nav class="navbar">
+        <a href="{% url 'sentiment' %}" class="nav-link {% if request.resolver_match.url_name == 'sentiment' %}active{% endif %}">감정 분석</a>
+        <a href="{% url 'summarize' %}" class="nav-link {% if request.resolver_match.url_name == 'summarize' %}active{% endif %}">문서 요약</a>
+        <a href="{% url 'moderate' %}" class="nav-link {% if request.resolver_match.url_name == 'moderate' %}active{% endif %}">유해 표현 분석</a>
+        <a href="{% url 'combo' %}" class="nav-link {% if request.resolver_match.url_name == 'combo' %}active{% endif %}">복합 분석</a>
+        
+        <div style="margin-left: auto;">
+            {% if user.is_authenticated %}
+                <span>👤 {{ user.username }}님</span>
+                <form action="{% url 'logout' %}" method="post" style="display:inline; margin-left: 10px;">
+                    {% csrf_token %}
+                    <button type="submit" style="background:none; border:none; color:#ef4444; cursor:pointer; font-weight:600;">로그아웃</button>
+                </form>
+            {% else %}
+                <a href="{% url 'login' %}" class="nav-link" style="color:#4f46e5; font-weight:600;">로그인</a>
+            {% endif %}
+        </div>
+    </nav>
+
+    <div class="container">
+        {% block content %}
+        {% endblock %}
+    </div>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

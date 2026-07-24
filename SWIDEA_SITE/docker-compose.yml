@@ -27,7 +27,7 @@ services:
       - ./media:/app/media
 volumes:
   swidea-mysql-data:  
-    external: true
+
     
     
       
